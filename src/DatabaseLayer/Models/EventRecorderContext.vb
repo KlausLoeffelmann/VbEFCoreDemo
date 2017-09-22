@@ -15,6 +15,8 @@ Public Class EventRecorderContext
     Inherits DbContext
     Implements IEventRecorderContext
 
+    Public Event TriggerUpdate(sender As Object, e As TriggerUpdateEventArgs)
+
     Public Property EventSources As DbSet(Of EventSource) Implements IEventRecorderContext.EventSources
     Public Property ActionTargets As DbSet(Of ActionTarget) Implements IEventRecorderContext.ActionTargets
     Public Property Events As DbSet(Of [Event]) Implements IEventRecorderContext.Events
@@ -36,10 +38,42 @@ Public Class EventRecorderContext
     Private Async Function EntityUpdaterAsync() As Task
         Dim entries = Me.ChangeTracker.Entries
         For Each item In entries
-            Dim temp = item.Entity
+            Dim currentEntity = item.Entity
+
+            Dim triggerAttribute = TryCast((From attItem In currentEntity.GetType.GetCustomAttributes(True)
+                                            Where (GetType(TriggerUpdateAttribute).IsAssignableFrom(attItem.GetType))).FirstOrDefault,
+                                            TriggerUpdateAttribute)
+            If triggerAttribute IsNot Nothing Then
+                Dim affectedProps = From [property] In currentEntity.GetType().GetProperties
+                                    Let hasTriggerAttribute = (From attItem In [property].GetCustomAttributes(True)
+                                                               Where (GetType(TriggerUpdateAttribute).IsAssignableFrom(attItem.GetType))).FirstOrDefault IsNot Nothing
+                                    Where hasTriggerAttribute
+
+                For Each propItem In affectedProps
+                    Dim triggerEventArgs = New TriggerUpdateEventArgs(currentEntity,
+                                                                      propItem.property.Name,
+                                                                      propItem.property.GetValue(currentEntity),
+                                                                      item.State)
+                    OnTriggerUpdate(triggerEventArgs)
+                    If triggerEventArgs.OldValue IsNot triggerEventArgs.NewValue Then
+                        Try
+                            propItem.property.SetValue(currentEntity, triggerEventArgs.NewValue)
+                        Catch ex As Exception
+                            Throw New ArgumentException("On assigning a new value in the TriggerUpdate event, an exception occured." & vbCrLf &
+                                                        $"{ex.Message}")
+
+                        End Try
+
+                    End If
+                Next
+            End If
         Next
         Await Task.Delay(0)
     End Function
+
+    Protected Overridable Sub OnTriggerUpdate(eArgs As TriggerUpdateEventArgs)
+        RaiseEvent TriggerUpdate(Me, eArgs)
+    End Sub
 End Class
 
 Public Class TestEventRecordContext

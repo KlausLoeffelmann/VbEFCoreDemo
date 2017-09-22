@@ -38,4 +38,23 @@ Public Module ActionTargetDal
                                                            .DateCreated = DateTimeOffset.Now,
                                                            .DateLastEdited = DateTimeOffset.Now})
     End Sub
+
+    Public Sub PatchActionTargetName(erContext As IEventRecorderContext,
+                                      actionTarget As ActionTarget)
+
+        erContext.ActionTargets.Update(actionTarget)
+        erContext.SaveChanges()
+
+        DirectCast(erContext, EventRecorderContext).
+            ChangeTracker.TrackGraph(actionTarget,
+                Sub(item)
+                    item.Entry.State = EntityState.Unchanged
+
+                    If TryCast(item.Entry.Entity, ActionTarget) IsNot Nothing Then
+                        DirectCast(erContext, EventRecorderContext).Entry(
+                                TryCast(item.Entry.Entity, ActionTarget)).
+                                    Property(NameOf(actionTarget.Name)).IsModified = True
+                    End If
+                End Sub)
+    End Sub
 End Module

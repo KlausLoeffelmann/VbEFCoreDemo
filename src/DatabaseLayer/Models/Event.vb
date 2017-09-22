@@ -1,5 +1,7 @@
 ﻿Imports System.ComponentModel.DataAnnotations
 Imports System.ComponentModel.DataAnnotations.Schema
+
+<TriggerUpdate>
 Public Class [Event]
 
     <Key>
@@ -13,7 +15,10 @@ Public Class [Event]
 
     <Column(TypeName:="nvarchar(200)")>
     Public Property Description As String
+
+    <TriggerUpdate>
     Public Property DateCreated As DateTimeOffset
+    <TriggerUpdate>
     Public Property DateLastEdited As DateTimeOffset
 
     Public Sub SetTimeSpan(startTime As TimeSpan, endTime As TimeSpan)
