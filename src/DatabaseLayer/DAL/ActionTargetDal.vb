@@ -42,8 +42,6 @@ Public Module ActionTargetDal
     Public Sub PatchActionTargetName(erContext As IEventRecorderContext,
                                       actionTarget As ActionTarget)
 
-        erContext.ActionTargets.Update(actionTarget)
-        erContext.SaveChanges()
 
         DirectCast(erContext, EventRecorderContext).
             ChangeTracker.TrackGraph(actionTarget,
@@ -56,5 +54,19 @@ Public Module ActionTargetDal
                                     Property(NameOf(actionTarget.Name)).IsModified = True
                     End If
                 End Sub)
+
+        erContext.SaveChanges()
+
     End Sub
+
+    Public Async Function GetAllActionTargetsAsync(erContext As IEventRecorderContext) As Task(Of List(Of ActionTarget))
+
+        Return Await erContext.ActionTargets.ToListAsync
+
+    End Function
+
+    Public Async Function GetByIdAsync(erContext As IEventRecorderContext, id As Guid) As Task(Of ActionTarget)
+        Return Await erContext.ActionTargets.Where(
+            Function(item) item.IdActionTarget = id).FirstOrDefaultAsync
+    End Function
 End Module
