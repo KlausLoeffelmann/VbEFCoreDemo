@@ -22,10 +22,11 @@ Public Class EventRecorderContext
     Public Property Events As DbSet(Of [Event]) Implements IEventRecorderContext.Events
 
     Protected Overrides Sub OnConfiguring(optionsBuilder As DbContextOptionsBuilder)
-        optionsBuilder.UseSqlServer("Server=SPNSURF3\SQLE2016;Database=EventRecorder;User ID=sa;Password=P@$$w0rd2407")
-        'optionsBuilder.UseSqlServer("Server=(localdb)\mssqllocaldb;Database=EventRecorder;Trusted_Connection=True;")
+        'optionsBuilder.UseSqlServer("Server=SPNSURF3\SQLE2016;Database=EventRecorder;User ID=sa;Password=P@$$w0rd2407")
+        optionsBuilder.UseSqlServer("Server=(localdb)\mssqllocaldb;Database=EventRecorder;Trusted_Connection=True;")
         'optionsBuilder.UseSqlServer("Server=W10SPNSB3\SQL2016;Database=EventRecorder;Trusted_Connection=True;")
     End Sub
+
     Public Overrides Function SaveChanges() As Integer Implements IEventRecorderContext.SaveChanges
         'EntityUpdater()
         Return MyBase.SaveChanges()
